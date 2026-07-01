@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SchoolShop 🎓</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <main class="app">
+    <section id="shop" class="screen active">
+      <div class="topline">
+        <div>
+          <div class="eyebrow">LOCKER DELIVERY</div>
+          <h1>SchoolShop <span class="grad">🎓</span></h1>
+        </div>
+        <div id="statusBadge" class="status">OPEN</div>
+      </div>
+      <p class="micro">Быстрая доставка по школе</p>
+      <h2 class="hero-title">Заказ в пару кликов<br>Доставка прямо в шкафчик</h2>
+      <p id="timeText" class="muted">Предзаказы открыты до 11:20. Откроемся завтра в <b>8:50</b>.</p>
+
+      <div class="featured-card">
+        <div class="hero-photo white-photo"><img src="assets/dubai.png" alt="Дубайский шоколад" /></div>
+        <div class="product-info">
+          <div class="tag">ХИТ</div>
+          <h3>Дубайский шоколад</h3>
+          <p>Премиальный шоколад с фисташковой начинкой. Получение — на ближайшей перемене.</p>
+          <div class="price">Цена позже</div>
+          <button id="quickReserve" class="primary primary-blue">В корзину</button>
+        </div>
+      </div>
+
+      <div class="section-title catalog-title">Каталог</div>
+      <div id="productGrid" class="grid"></div>
+    </section>
+
+    <section id="cart" class="screen">
+      <div class="eyebrow">YOUR ORDER</div>
+      <h2 class="page-title">Корзина</h2>
+      <p class="muted">Проверь заказ и укажи шкафчик.</p>
+      <div id="cartList" class="cart-list"></div>
+      <div class="checkout-card">
+        <div class="checkout-row"><span>Итого</span><b id="cartTotal">0 ₽</b></div>
+        <label>Этаж шкафчика</label>
+        <div class="floors">
+          <button class="floor active" data-floor="2">2 этаж</button>
+          <button class="floor" data-floor="3">3 этаж</button>
+          <button class="floor" data-floor="4">4 этаж</button>
+        </div>
+        <label>Номер шкафчика</label>
+        <input id="lockerInput" inputmode="numeric" placeholder="например 10" />
+        <button id="placeOrder" class="primary">Оформить заказ</button>
+      </div>
+    </section>
+
+    <section id="profile" class="screen">
+      <div class="eyebrow">PROFILE</div>
+      <h2 class="page-title">Профиль</h2>
+      <p class="muted">Баланс, адрес шкафчика и история заказов.</p>
+      <div class="profile-card">
+        <div class="profile-row"><span>Шкафчик</span><b id="profileLocker">не указан</b></div>
+        <div class="profile-row"><span>Баланс</span><b id="profileBalance">позже</b></div>
+        <div class="profile-row"><span>Пополнение</span><b class="topup-text">через перевод админу</b></div>
+        <div class="profile-row"><span>Поддержка</span><b>@SchoolShop</b></div>
+      </div>
+      <div class="section-title history-heading">Мои заказы</div>
+      <div id="orderHistory" class="history"></div>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <button data-tab="shop" class="tab active">🛍️ Shop</button>
+    <button data-tab="cart" class="tab">🛒 Cart</button>
+    <button data-tab="profile" class="tab">👤 Profile</button>
+  </nav>
+
+  <div id="toast" class="toast"><span id="toastText"></span><button id="toastAction" class="toast-action" type="button">Пополнить баланс</button></div>
+  <script src="app.js"></script>
+</body>
+</html>
