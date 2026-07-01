@@ -23,6 +23,7 @@ async function db(path, options = {}) {
     ...options,
     headers: { ...headers, ...(options.headers || {}) }
   });
+
   const text = await r.text();
   if (!r.ok) throw new Error(text);
   return text ? JSON.parse(text) : null;
@@ -34,10 +35,14 @@ function isOwner(user) {
 
 async function notifyAdmin(text) {
   if (!BOT_TOKEN || !ADMIN_CHAT_ID) return;
+
   await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: ADMIN_CHAT_ID, text })
+    body: JSON.stringify({
+      chat_id: ADMIN_CHAT_ID,
+      text
+    })
   });
 }
 
@@ -51,7 +56,7 @@ exports.handler = async (event) => {
     const { action, user } = body;
 
     if (!SUPABASE_URL || !SERVICE_KEY) {
-      return res({ ok: false, error: "missing supabase env" });
+      return res({ ok: false, error: "missing_supabase_env" });
     }
 
     if (action === "init") {
@@ -59,6 +64,7 @@ exports.handler = async (event) => {
       const products = await db("products?is_active=eq.true&select=*&order=created_at.asc");
 
       let users = await db(`users?id=eq.${user.id}&select=*`);
+
       if (!users.length) {
         await db("users", {
           method: "POST",
@@ -68,7 +74,12 @@ exports.handler = async (event) => {
             balance: 0
           })
         });
-        users = [{ id: user.id, username: user.username, balance: 0 }];
+
+        users = [{
+          id: user.id,
+          username: user.username || user.first_name || "unknown",
+          balance: 0
+        }];
       }
 
       const orders = await db(`orders?user_id=eq.${user.id}&select=*&order=created_at.desc`);
@@ -101,9 +112,15 @@ exports.handler = async (event) => {
       }
 
       for (const item of items) {
-        const p = await db(`products?id=eq.${item.id}&select=*`);
-        if (!p.length || p[0].stock < item.qty) {
-          return res({ ok: false, reason: "out_of_stock", product: item.product });
+        const found = await db(`products?id=eq.${item.id}&select=*`);
+        const product = found[0];
+
+        if (!product || product.stock < item.qty) {
+          return res({
+            ok: false,
+            reason: "out_of_stock",
+            product: item.product
+          });
         }
       }
 
@@ -115,10 +132,14 @@ exports.handler = async (event) => {
       });
 
       for (const item of items) {
-        const p = await db(`products?id=eq.${item.id}&select=*`);
+        const found = await db(`products?id=eq.${item.id}&select=*`);
+        const product = found[0];
+
         await db(`products?id=eq.${item.id}`, {
           method: "PATCH",
-          body: JSON.stringify({ stock: p[0].stock - item.qty })
+          body: JSON.stringify({
+            stock: product.stock - item.qty
+          })
         });
       }
 
@@ -147,17 +168,24 @@ exports.handler = async (event) => {
         `Баланс после: ${newBalance} ₽`
       );
 
-      return res({ ok: true, order: inserted[0], balance: newBalance, charged: total });
+      return res({
+        ok: true,
+        order: inserted[0],
+        balance: newBalance,
+        charged: total
+      });
     }
 
     if (action === "listOrders") {
       if (!isOwner(user)) return res({ ok: false, error: "not_owner" });
+
       const orders = await db("orders?select=*&order=created_at.desc");
       return res({ ok: true, orders });
     }
 
     if (action === "updateOrderStatus") {
       if (!isOwner(user)) return res({ ok: false, error: "not_owner" });
+
       const { orderId, status } = body;
 
       const updated = await db(`orders?id=eq.${orderId}`, {
@@ -169,11 +197,28 @@ exports.handler = async (event) => {
       return res({ ok: true, order: updated[0] });
     }
 
+    if (action === "updateOrderCourier") {
+      if (!isOwner(user)) return res({ ok: false, error: "not_owner" });
+
+      const { orderId, courierName } = body;
+
+      const updated = await db(`orders?id=eq.${orderId}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({
+          courier_name: courierName || ""
+        })
+      });
+
+      return res({ ok: true, order: updated[0] });
+    }
+
     if (action === "saveProduct") {
       if (!isOwner(user)) return res({ ok: false, error: "not_owner" });
+
       const p = body.product;
 
-      await db("products", {
+      await db("products?on_conflict=id", {
         method: "POST",
         headers: { Prefer: "resolution=merge-duplicates" },
         body: JSON.stringify(p)
@@ -184,15 +229,18 @@ exports.handler = async (event) => {
 
     if (action === "deleteProduct") {
       if (!isOwner(user)) return res({ ok: false, error: "not_owner" });
+
       await db(`products?id=eq.${body.id}`, {
         method: "PATCH",
         body: JSON.stringify({ is_active: false })
       });
+
       return res({ ok: true });
     }
 
     if (action === "topup") {
       if (!isOwner(user)) return res({ ok: false, error: "not_owner" });
+
       const { userId, amount } = body;
 
       const rows = await db(`users?id=eq.${userId}&select=*`);
@@ -210,6 +258,7 @@ exports.handler = async (event) => {
 
     if (action === "updateSettings") {
       if (!isOwner(user)) return res({ ok: false, error: "not_owner" });
+
       const s = body.settings;
 
       await db("settings?id=eq.1", {
@@ -225,13 +274,29 @@ exports.handler = async (event) => {
 
       const orders = await db("orders?select=*");
       const delivered = orders.filter(o => o.status === "доставлен");
-      const revenue = delivered.reduce((sum, o) => sum + (o.total || 0), 0);
+      const revenue = delivered.reduce((sum, o) => sum + Number(o.total || 0), 0);
+
+      const popular = {};
+
+      for (const o of orders) {
+        if (Array.isArray(o.items)) {
+          for (const item of o.items) {
+            popular[item.product] = (popular[item.product] || 0) + Number(item.qty || 0);
+          }
+        }
+      }
+
+      const topProducts = Object.entries(popular)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, count]) => ({ name, count }));
 
       return res({
         ok: true,
         totalOrders: orders.length,
         deliveredOrders: delivered.length,
-        revenue
+        revenue,
+        topProducts
       });
     }
 
