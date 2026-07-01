@@ -18,6 +18,7 @@ state.cart ||= {};
 state.orders ||= [];
 state.floor ||= '2';
 state.locker ||= '';
+state.balance ??= 0;
 
 function save(){
   localStorage.setItem(storageKey, JSON.stringify(state));
@@ -165,6 +166,8 @@ function renderProfile(){
     ? `${state.floor} этаж · ${state.locker}`
     : 'не указан';
 
+  document.getElementById('profileBalance').textContent = `${state.balance ?? 0} ₽`;
+
   const h = document.getElementById('orderHistory');
 
   h.innerHTML = state.orders.length
@@ -218,12 +221,17 @@ async function placeOrder(){
   }
 
   if(!result.ok && result.reason === 'not_enough_balance'){
-    return toast(`Недостаточно средств. Баланс: ${result.balance}₽, нужно: ${result.need}₽`, {topup:true});
+    state.balance = result.balance ?? 0;
+    save();
+    renderProfile();
+    return toast(`Недостаточно средств. Баланс: ${state.balance}₽, нужно: ${result.need}₽`, {topup:true});
   }
 
   if(!result.ok){
     return toast('Заказ не оформлен. Попробуй позже');
   }
+
+  state.balance = result.balance ?? state.balance;
 
   state.orders.push({
     date: new Date().toLocaleString('ru-RU'),
