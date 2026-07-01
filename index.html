@@ -17,20 +17,12 @@
         </div>
         <div id="statusBadge" class="status">OPEN</div>
       </div>
+
       <p class="micro">Быстрая доставка по школе</p>
       <h2 class="hero-title">Заказ в пару кликов<br>Доставка прямо в шкафчик</h2>
-      <p id="timeText" class="muted">Предзаказы открыты до 11:20. Откроемся завтра в <b>8:50</b>.</p>
+      <p id="timeText" class="muted">Загрузка времени работы...</p>
 
-      <div class="featured-card">
-        <div class="hero-photo white-photo"><img src="assets/dubai.png" alt="Дубайский шоколад" /></div>
-        <div class="product-info">
-          <div class="tag">ХИТ</div>
-          <h3>Дубайский шоколад</h3>
-          <p>Премиальный шоколад с фисташковой начинкой. Получение — на ближайшей перемене.</p>
-          <div class="price">Цена позже</div>
-          <button id="quickReserve" class="primary primary-blue">В корзину</button>
-        </div>
-      </div>
+      <div id="heroProduct" class="featured-card"></div>
 
       <div class="section-title catalog-title">Каталог</div>
       <div id="productGrid" class="grid"></div>
@@ -40,17 +32,25 @@
       <div class="eyebrow">YOUR ORDER</div>
       <h2 class="page-title">Корзина</h2>
       <p class="muted">Проверь заказ и укажи шкафчик.</p>
+
       <div id="cartList" class="cart-list"></div>
+
       <div class="checkout-card">
-        <div class="checkout-row"><span>Итого</span><b id="cartTotal">0 ₽</b></div>
+        <div class="checkout-row">
+          <span>Итого</span>
+          <b id="cartTotal">0 ₽</b>
+        </div>
+
         <label>Этаж шкафчика</label>
         <div class="floors">
           <button class="floor active" data-floor="2">2 этаж</button>
           <button class="floor" data-floor="3">3 этаж</button>
           <button class="floor" data-floor="4">4 этаж</button>
         </div>
+
         <label>Номер шкафчика</label>
         <input id="lockerInput" inputmode="numeric" placeholder="например 10" />
+
         <button id="placeOrder" class="primary">Оформить заказ</button>
       </div>
     </section>
@@ -58,15 +58,96 @@
     <section id="profile" class="screen">
       <div class="eyebrow">PROFILE</div>
       <h2 class="page-title">Профиль</h2>
-      <p class="muted">Баланс, адрес шкафчика и история заказов.</p>
+      <p class="muted">Баланс, шкафчик и история заказов.</p>
+
       <div class="profile-card">
-        <div class="profile-row"><span>Шкафчик</span><b id="profileLocker">не указан</b></div>
-        <div class="profile-row"><span>Баланс</span><b id="profileBalance">позже</b></div>
-        <div class="profile-row"><span>Пополнение</span><b class="topup-text">через перевод админу</b></div>
-        <div class="profile-row"><span>Поддержка</span><b>@SchoolShop</b></div>
+        <div class="profile-row">
+          <span>Шкафчик</span>
+          <b id="profileLocker">не указан</b>
+        </div>
+
+        <div class="profile-row">
+          <span>Баланс</span>
+          <b id="profileBalance">0 ₽</b>
+        </div>
+
+        <div class="profile-row">
+          <span>Пополнение</span>
+          <b class="topup-text">
+            <a href="https://t.me/vicerapgod" target="_blank">@vicerapgod</a>
+          </b>
+        </div>
+
+        <div class="profile-row">
+          <span>Поддержка</span>
+          <b>
+            <a href="https://t.me/vicerapgod" target="_blank">@vicerapgod</a>
+          </b>
+        </div>
       </div>
+
       <div class="section-title history-heading">Мои заказы</div>
       <div id="orderHistory" class="history"></div>
+    </section>
+
+    <section id="courier" class="screen">
+      <div class="eyebrow">COURIER</div>
+      <h2 class="page-title">Курьерка</h2>
+      <p class="muted">Новые заказы и доставка по шкафчикам.</p>
+
+      <div id="courierOrders" class="admin-list"></div>
+    </section>
+
+    <section id="admin" class="screen">
+      <div class="eyebrow">OWNER PANEL</div>
+      <h2 class="page-title">Админка</h2>
+      <p class="muted">Управление товарами, заказами, балансом и отчетами.</p>
+
+      <div class="admin-block">
+        <h3>Отчеты</h3>
+        <div id="reportBox" class="report-box">Загрузка...</div>
+        <button id="refreshReport" class="secondary">Обновить отчет</button>
+      </div>
+
+      <div class="admin-block">
+        <h3>Время работы</h3>
+        <div class="admin-grid">
+          <input id="openHour" placeholder="Открытие час" inputmode="numeric" />
+          <input id="openMinute" placeholder="Открытие мин" inputmode="numeric" />
+          <input id="closeHour" placeholder="Закрытие час" inputmode="numeric" />
+          <input id="closeMinute" placeholder="Закрытие мин" inputmode="numeric" />
+        </div>
+        <button id="saveSettings" class="primary small-primary">Сохранить время</button>
+      </div>
+
+      <div class="admin-block">
+        <h3>Пополнить баланс</h3>
+        <div class="admin-grid">
+          <input id="topupUserId" placeholder="Telegram user ID" inputmode="numeric" />
+          <input id="topupAmount" placeholder="Сумма" inputmode="numeric" />
+        </div>
+        <button id="topupBtn" class="primary small-primary">Пополнить</button>
+      </div>
+
+      <div class="admin-block">
+        <h3>Товар</h3>
+        <div class="admin-grid">
+          <input id="productId" placeholder="ID товара: snickers" />
+          <input id="productName" placeholder="Название" />
+          <input id="productPrice" placeholder="Цена" inputmode="numeric" />
+          <input id="productOldPrice" placeholder="Старая цена" inputmode="numeric" />
+          <input id="productImage" placeholder="Картинка: assets/name.png или ссылка" />
+          <input id="productStock" placeholder="Остаток" inputmode="numeric" />
+          <input id="productHit" placeholder="Хит? true/false" />
+        </div>
+        <button id="saveProduct" class="primary small-primary">Сохранить товар</button>
+        <button id="deleteProduct" class="danger">Скрыть товар</button>
+      </div>
+
+      <div class="admin-block">
+        <h3>Все заказы</h3>
+        <div id="adminOrders" class="admin-list"></div>
+      </div>
     </section>
   </main>
 
@@ -74,9 +155,15 @@
     <button data-tab="shop" class="tab active">🛍️ Shop</button>
     <button data-tab="cart" class="tab">🛒 Cart</button>
     <button data-tab="profile" class="tab">👤 Profile</button>
+    <button data-tab="courier" class="tab courier-tab hidden">🛵 Courier</button>
+    <button data-tab="admin" class="tab admin-tab hidden">👑 Admin</button>
   </nav>
 
-  <div id="toast" class="toast"><span id="toastText"></span><button id="toastAction" class="toast-action" type="button">Пополнить баланс</button></div>
+  <div id="toast" class="toast">
+    <span id="toastText"></span>
+    <button id="toastAction" class="toast-action" type="button">Пополнить баланс</button>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
