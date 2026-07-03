@@ -18,7 +18,8 @@ let state = {
   orders: [],
   settings: null,
   profile: { balance: 0 },
-  isOwner: false
+  isOwner: false,
+  allOrders: []
 };
 
 let toastTimer;
@@ -29,6 +30,7 @@ async function api(action, data = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, user, ...data })
   });
+
   return await res.json();
 }
 
@@ -43,7 +45,7 @@ function toast(msg, opts = {}) {
 
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 5000);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 9000);
 }
 
 function money(v) {
@@ -302,7 +304,7 @@ async function placeOrder() {
   }
 
   if (!result.ok) {
-    return toast('Заказ не оформлен. Попробуй позже');
+    return toast('Заказ не оформлен: ' + (result.error || JSON.stringify(result)));
   }
 
   state.profile.balance = result.balance;
@@ -450,7 +452,7 @@ function setupAdmin() {
     const amount = document.getElementById('topupAmount').value.trim();
 
     const r = await api('topup', { userId, amount });
-    toast(r.ok ? `Баланс пополнен: ${money(r.balance)}` : 'Ошибка пополнения');
+    toast(r.ok ? `Баланс пополнен: ${money(r.balance)}` : 'Ошибка пополнения: ' + (r.error || JSON.stringify(r)));
   };
 
   document.getElementById('saveProduct').onclick = async () => {
@@ -468,7 +470,7 @@ function setupAdmin() {
     if (!product.id || !product.name) return toast('Укажи ID и название товара');
 
     const r = await api('saveProduct', { product });
-    toast(r.ok ? 'Товар сохранён' : 'Ошибка сохранения');
+    toast(r.ok ? 'Товар сохранён' : 'Ошибка сохранения: ' + (r.error || JSON.stringify(r)));
     await initApp();
   };
 
@@ -477,7 +479,7 @@ function setupAdmin() {
     if (!id) return toast('Укажи ID товара');
 
     const r = await api('deleteProduct', { id });
-    toast(r.ok ? 'Товар скрыт' : 'Ошибка удаления');
+    toast(r.ok ? 'Товар скрыт' : 'Ошибка удаления: ' + (r.error || JSON.stringify(r)));
     await initApp();
   };
 
@@ -489,7 +491,7 @@ async function initApp() {
     const data = await api('init');
 
     if (!data.ok) {
-      toast('Ошибка загрузки данных');
+      toast('Ошибка: ' + (data.error || JSON.stringify(data)));
       return;
     }
 
@@ -507,7 +509,7 @@ async function initApp() {
     setupAdmin();
   } catch (e) {
     console.error(e);
-    toast('Ошибка подключения к серверу');
+    toast('Ошибка сервера: ' + (e.message || JSON.stringify(e)));
   }
 }
 
