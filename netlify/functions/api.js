@@ -33,17 +33,28 @@ function isOwner(user) {
   return user?.username?.toLowerCase() === OWNER_USERNAME;
 }
 
-async function notifyAdmin(text) {
-  if (!BOT_TOKEN || !ADMIN_CHAT_ID) return;
+async function sendTelegram(chatId, text) {
+  if (!BOT_TOKEN || !chatId) return;
 
   await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: ADMIN_CHAT_ID,
-      text
-    })
+    body: JSON.stringify({ chat_id: chatId, text })
   });
+}
+
+async function notifyAdmin(text) {
+  await sendTelegram(ADMIN_CHAT_ID, text);
+}
+
+async function notifyCustomer(userId, status) {
+  if (status === "несут") {
+    await sendTelegram(userId, "🚴 Ваш заказ уже несут. Скоро будет у шкафчика.");
+  }
+
+  if (status === "доставлен") {
+    await sendTelegram(userId, "✅ Ваш заказ доставлен в шкафчик.");
+  }
 }
 
 exports.handler = async (event) => {
@@ -162,6 +173,7 @@ exports.handler = async (event) => {
       await notifyAdmin(
         `🛍 Новый заказ SchoolShop\n\n` +
         `Покупатель: @${user.username || user.first_name || "unknown"}\n` +
+        `ID: ${user.id}\n` +
         `Шкафчик: ${floor} этаж, №${locker}\n\n` +
         `${orderText}\n\n` +
         `Итого: ${total} ₽\n` +
@@ -194,7 +206,13 @@ exports.handler = async (event) => {
         body: JSON.stringify({ status })
       });
 
-      return res({ ok: true, order: updated[0] });
+      const order = updated[0];
+
+      if (order?.user_id && (status === "несут" || status === "доставлен")) {
+        await notifyCustomer(order.user_id, status);
+      }
+
+      return res({ ok: true, order });
     }
 
     if (action === "updateOrderCourier") {
@@ -252,6 +270,8 @@ exports.handler = async (event) => {
         method: "PATCH",
         body: JSON.stringify({ balance: newBalance })
       });
+
+      await sendTelegram(userId, `💳 Баланс пополнен на ${amount} ₽.\nТекущий баланс: ${newBalance} ₽`);
 
       return res({ ok: true, balance: newBalance });
     }
